@@ -15,7 +15,6 @@ class Server {
     this.servedCustomers = 0,
   });
 
-  // ✅ تم تصحيح الدالة - هتاخد currentTime كـ parameter
   double getUtilization(double currentTime) {
     if (currentTime == 0) return 0;
     return totalBusyTime / currentTime;

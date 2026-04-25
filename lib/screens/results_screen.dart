@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../logic/queue_system.dart';
-import '../screens/chart_screen.dart';
-import '../widgets/custom_card.dart';
 
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({super.key});
@@ -12,133 +10,398 @@ class ResultsScreen extends StatelessWidget {
     var queueSystem = Provider.of<QueueSystem>(context);
     var result = queueSystem.singleResult ?? queueSystem.doubleResult;
 
-    if (result == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Results'),
-          backgroundColor: Colors.orange,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.info_outline, size: 64, color: Colors.orange),
-              const SizedBox(height: 20),
-              const Text(
-                'No simulation results yet',
-                style: TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Go Back'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        title: Text('Results - ${result.systemType}'),
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.orange[50]!, Colors.white],
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withOpacity(0.08),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: const Icon(Icons.arrow_back_ios_new,
+                color: Colors.white, size: 18),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  children: [
-                    CustomCard(
-                      title: '📊 Average Waiting Time',
-                      value: '${result.avgWaitingTime.toStringAsFixed(2)} sec',
-                      icon: Icons.timer,
-                      color: Colors.orange,
-                    ),
-                    CustomCard(
-                      title: '⚙️ Average Service Time',
-                      value: '${result.avgServiceTime.toStringAsFixed(2)} sec',
-                      icon: Icons.build,
-                      color: Colors.blue,
-                    ),
-                    CustomCard(
-                      title: '👥 Served Customers',
-                      value: '${result.servedCustomers}',
-                      icon: Icons.people,
-                      color: Colors.green,
-                    ),
-                    CustomCard(
-                      title: '📈 Server Utilization',
-                      value:
-                          '${(result.serverUtilization * 100).toStringAsFixed(1)}%',
-                      icon: Icons.show_chart,
-                      color: Colors.purple,
-                    ),
-                    CustomCard(
-                      title: '⏳ Max Queue Length',
-                      value: '${result.maxQueueLength}',
-                      icon: Icons.queue,
-                      color: Colors.red,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
+        title: const Text(
+          'Simulation Results',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: result == null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.orange,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFFF6B00).withOpacity(0.1),
+                    ),
+                    child: const Icon(Icons.info_outline,
+                        size: 48, color: Color(0xFFFF8C00)),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'No Results Yet',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ChartScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.show_chart),
-                      label: const Text('View Charts'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Run a simulation first to see results',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.4),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+                        ),
+                      ),
+                      child: const Text(
+                        'Go Back',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B00).withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          result.systemType,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 1.3,
+                    children: [
+                      _buildStatCard(
+                        'Avg Wait Time',
+                        '${result.avgWaitingTime.toStringAsFixed(2)}s',
+                        Icons.timer_outlined,
+                        const Color(0xFFFF8C00),
+                        'Average customer waiting',
+                      ),
+                      _buildStatCard(
+                        'Avg Service Time',
+                        '${result.avgServiceTime.toStringAsFixed(2)}s',
+                        Icons.build_outlined,
+                        const Color(0xFF44AAFF),
+                        'Average time per service',
+                      ),
+                      _buildStatCard(
+                        'Customers Served',
+                        '${result.servedCustomers}',
+                        Icons.group_outlined,
+                        const Color(0xFF44DD88),
+                        'Total customers processed',
+                      ),
+                      _buildStatCard(
+                        'Utilization',
+                        '${(result.serverUtilization * 100).toStringAsFixed(1)}%',
+                        Icons.speed,
+                        const Color(0xFFFF6B6B),
+                        'Server busy percentage',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white.withOpacity(0.05),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.08),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFFFFAA00).withOpacity(0.15),
+                          ),
+                          child: const Icon(Icons.queue,
+                              color: Color(0xFFFFAA00), size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Max Queue Length',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.55),
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${result.maxQueueLength} customers',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFFFFAA00).withOpacity(0.15),
+                          ),
+                          child: Text(
+                            result.maxQueueLength <= 3
+                                ? 'Good'
+                                : result.maxQueueLength <= 8
+                                    ? 'Moderate'
+                                    : 'High',
+                            style: const TextStyle(
+                              color: Color(0xFFFFAA00),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white.withOpacity(0.05),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.08),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Server Utilization',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: result.serverUtilization.clamp(0, 1),
+                            backgroundColor: Colors.white.withOpacity(0.08),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              result.serverUtilization > 0.9
+                                  ? const Color(0xFFFF4444)
+                                  : result.serverUtilization > 0.7
+                                      ? const Color(0xFFFFAA00)
+                                      : const Color(0xFF44DD88),
+                            ),
+                            minHeight: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '0%',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.3),
+                                fontSize: 11,
+                              ),
+                            ),
+                            Text(
+                              '${(result.serverUtilization * 100).toStringAsFixed(1)}%',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              '100%',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.3),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF6B00).withOpacity(0.35),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.replay_rounded,
+                              color: Colors.white, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            'Run Another Simulation',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    String subtitle,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.05),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: color.withOpacity(0.12),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 11,
+                ),
+              ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
