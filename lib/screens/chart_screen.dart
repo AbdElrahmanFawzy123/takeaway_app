@@ -44,54 +44,39 @@ class _ChartScreenState extends State<ChartScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // عنوان المقارنة
+                  // Title
                   const Text(
                     '📊 Performance Comparison',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
 
-                  // بطاقة المقارنة
-                  Card(
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          _buildComparisonRow(
-                            'Avg Waiting Time',
-                            queueSystem.singleResult?.avgWaitingTime,
-                            queueSystem.doubleResult?.avgWaitingTime,
-                            'sec',
-                          ),
-                          const Divider(),
-                          _buildComparisonRow(
-                            'Server Utilization',
-                            queueSystem.singleResult?.serverUtilization,
-                            queueSystem.doubleResult?.serverUtilization,
-                            '%',
-                            isPercentage: true,
-                          ),
-                          const Divider(),
-                          _buildComparisonRow(
-                            'Max Queue Length',
-                            queueSystem.singleResult?.maxQueueLength
-                                ?.toDouble(),
-                            queueSystem.doubleResult?.maxQueueLength
-                                ?.toDouble(),
-                            'cust',
-                          ),
-                        ],
-                      ),
-                    ),
+                  // Comparison Cards
+                  _buildComparisonCard(
+                    'Average Waiting Time',
+                    queueSystem.singleResult?.avgWaitingTime,
+                    queueSystem.doubleResult?.avgWaitingTime,
+                    'sec',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildComparisonCard(
+                    'Server Utilization',
+                    queueSystem.singleResult?.serverUtilization,
+                    queueSystem.doubleResult?.serverUtilization,
+                    '%',
+                    isPercentage: true,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildComparisonCard(
+                    'Max Queue Length',
+                    queueSystem.singleResult?.maxQueueLength?.toDouble(),
+                    queueSystem.doubleResult?.maxQueueLength?.toDouble(),
+                    'customers',
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
-                  // رسم بياني لمتوسط وقت الانتظار
+                  // Bar Chart
                   const Text(
                     '📈 Average Waiting Time Comparison',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -230,9 +215,9 @@ class _ChartScreenState extends State<ChartScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
-                  // رسم بياني لطول قائمة الانتظار مع الزمن لـ Single Server
+                  // Line Chart for Single Server Queue Length
                   if (queueSystem.singleResult != null &&
                       queueSystem.singleResult!.queueLengthHistory.isNotEmpty)
                     Column(
@@ -330,16 +315,16 @@ class _ChartScreenState extends State<ChartScreen> {
                       ],
                     ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
-                  // زر تشغيل النظامين معًا
+                  // Run Both Systems Button
                   ElevatedButton.icon(
                     onPressed: _isLoading
                         ? null
                         : () async {
                             setState(() => _isLoading = true);
 
-                            // تشغيل Single Server
+                            // Run Single Server
                             queueSystem.runSimulationLive(
                               numCustomers: 50,
                               meanInterarrival: 2,
@@ -347,10 +332,9 @@ class _ChartScreenState extends State<ChartScreen> {
                               numServers: 1,
                             );
 
-                            // نستنى شوية عشان السينجل يخلص
-                            await Future.delayed(const Duration(seconds: 8));
+                            await Future.delayed(const Duration(seconds: 10));
 
-                            // تشغيل Double Server
+                            // Run Double Server
                             queueSystem.runSimulationLive(
                               numCustomers: 50,
                               meanInterarrival: 2,
@@ -358,12 +342,10 @@ class _ChartScreenState extends State<ChartScreen> {
                               numServers: 2,
                             );
 
-                            // نستنى شوية عشان الدبل يخلص
-                            await Future.delayed(const Duration(seconds: 8));
-
-                            setState(() => _isLoading = false);
+                            await Future.delayed(const Duration(seconds: 10));
 
                             if (mounted) {
+                              setState(() => _isLoading = false);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -390,35 +372,35 @@ class _ChartScreenState extends State<ChartScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
+                      minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-
-                  // رسالة توضيحية إذا لم توجد نتائج
                   if (queueSystem.singleResult == null &&
                       queueSystem.doubleResult == null)
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.orange),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'No simulation results yet. Press the button above to run both systems and see comparison.',
-                              style: TextStyle(fontSize: 14),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.orange),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'No simulation results yet. Press the button above to run both systems and see comparison.',
+                                style: TextStyle(fontSize: 14),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                 ],
@@ -427,86 +409,87 @@ class _ChartScreenState extends State<ChartScreen> {
     );
   }
 
-  Widget _buildComparisonRow(
+  Widget _buildComparisonCard(
     String label,
     double? single,
     double? doubleVal,
     String unit, {
     bool isPercentage = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(10),
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    'Single',
-                    style: TextStyle(color: Colors.orange.shade800),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    single != null
-                        ? (isPercentage
-                              ? '${(single * 100).toStringAsFixed(1)}%'
-                              : '${single.toStringAsFixed(2)} $unit')
-                        : '—',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+            ),
+            Expanded(
+              flex: 1,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    const Text('Single', style: TextStyle(fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text(
+                      single != null
+                          ? (isPercentage
+                                ? '${(single * 100).toStringAsFixed(1)}%'
+                                : '${single.toStringAsFixed(2)} $unit')
+                          : '—',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 1,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Double',
-                    style: TextStyle(color: Colors.green.shade800),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    doubleVal != null
-                        ? (isPercentage
-                              ? '${(doubleVal * 100).toStringAsFixed(1)}%'
-                              : '${doubleVal.toStringAsFixed(2)} $unit')
-                        : '—',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 1,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    const Text('Double', style: TextStyle(fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text(
+                      doubleVal != null
+                          ? (isPercentage
+                                ? '${(doubleVal * 100).toStringAsFixed(1)}%'
+                                : '${doubleVal.toStringAsFixed(2)} $unit')
+                          : '—',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

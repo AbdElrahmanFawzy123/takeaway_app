@@ -28,10 +28,10 @@ class _InputScreenState extends State<InputScreen> {
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.orange[50]!, Colors.white],
+          // backgroundBlendMode: BlendMode,
+          image: DecorationImage(
+            image: AssetImage('assets/images/restaurant.jpg'),
+            fit: BoxFit.cover,
           ),
         ),
         child: Padding(

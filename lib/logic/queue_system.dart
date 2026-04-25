@@ -18,23 +18,22 @@ class QueueSystem extends ChangeNotifier {
   SimulationResult? singleResult;
   SimulationResult? doubleResult;
 
+  // UI State
   List<int> currentQueueIds = [];
   String server1Status = "Idle";
   String server2Status = "Idle";
   int? currentCustomerId1;
   int? currentCustomerId2;
-
   List<EventLog> eventLogs = [];
 
-  // متغيرات للمحاكاة
+  // Simulation State
   int _nextCustomerIndex = 0;
-  List<double> queueHistory = [];
+  List<double> _queueHistory = [];
   double _meanInterarrival = 0;
   double _meanService = 0;
-  List<Timer> _activeTimers = []; // لتتبع التايمرز ومنع التسريب
+  final List<Timer> _activeTimers = [];
 
   void reset() {
-    // إلغاء كل التايمرز النشطة
     for (var timer in _activeTimers) {
       timer.cancel();
     }
@@ -50,7 +49,7 @@ class QueueSystem extends ChangeNotifier {
     currentCustomerId1 = null;
     currentCustomerId2 = null;
     eventLogs.clear();
-    queueHistory.clear();
+    _queueHistory.clear();
     _nextCustomerIndex = 0;
     isRunning = false;
     notifyListeners();
@@ -61,7 +60,6 @@ class QueueSystem extends ChangeNotifier {
     notifyListeners();
   }
 
-  // بدء المحاكاة الحية
   void runSimulationLive({
     required int numCustomers,
     required double meanInterarrival,
@@ -75,7 +73,7 @@ class QueueSystem extends ChangeNotifier {
     _nextCustomerIndex = 0;
     currentTime = 0;
 
-    // إنشاء العملاء بزمن وصول حقيقي
+    // Generate customers
     customers = [];
     double time = 0;
     for (int i = 0; i < numCustomers; i++) {
@@ -86,18 +84,15 @@ class QueueSystem extends ChangeNotifier {
     servers = List.generate(numServers, (i) => Server(id: i + 1));
     notifyListeners();
 
-    // بدأ أول عميل
     _scheduleNextArrival();
   }
 
-  // جدولة وصول العميل التالي
   void _scheduleNextArrival() {
     if (!isRunning) return;
 
     if (_nextCustomerIndex < customers.length) {
       Customer nextCustomer = customers[_nextCustomerIndex];
       double waitTime = nextCustomer.arrivalTime - currentTime;
-
       if (waitTime < 0) waitTime = 0;
 
       Timer timer = Timer(
@@ -113,23 +108,19 @@ class QueueSystem extends ChangeNotifier {
     }
   }
 
-  // عميل جديد وصل
   void _arriveCustomer(int index) {
     if (!isRunning) return;
 
     Customer customer = customers[index];
     currentTime = customer.arrivalTime;
-
     _addLog('Customer ${customer.id} arrived 🚶', 'arrive');
 
-    // ضيفه في الطابور
     queue.add(customer);
     _updateQueueDisplay();
     _tryStartService();
     notifyListeners();
   }
 
-  // حاول تبدأ خدمة لأي سيرفر فاضي
   void _tryStartService() {
     for (var server in servers) {
       if (!server.isBusy && queue.isNotEmpty) {
@@ -148,7 +139,7 @@ class QueueSystem extends ChangeNotifier {
           'start',
         );
 
-        // تحديث واجهة المستخدم
+        // Update UI
         if (server.id == 1) {
           server1Status = "Busy";
           currentCustomerId1 = customer.id;
@@ -160,7 +151,6 @@ class QueueSystem extends ChangeNotifier {
         _updateQueueDisplay();
         notifyListeners();
 
-        // جدول انتهاء الخدمة بعد وقت الخدمة
         Timer timer = Timer(
           Duration(milliseconds: (serviceTime * 1000).toInt()),
           () {
@@ -173,12 +163,10 @@ class QueueSystem extends ChangeNotifier {
     }
   }
 
-  // عميل خلص خدمته
   void _finishService(int serverId, int customerId) {
     if (!isRunning) return;
 
     var server = servers.firstWhere((s) => s.id == serverId);
-
     _addLog(
       'Customer $customerId finished service on Server $serverId 🔴',
       'finish',
@@ -196,22 +184,16 @@ class QueueSystem extends ChangeNotifier {
     }
 
     notifyListeners();
-
-    // بعد ما يخلص، نحاول نخدم عميل تاني
     _tryStartService();
-
-    // نفحص لو المحاكاة خلصت
     _checkSimulationComplete();
   }
 
-  // تحديث واجهة الطابور
   void _updateQueueDisplay() {
     currentQueueIds = queue.map((c) => c.id).toList();
-    queueHistory.add(queue.length.toDouble());
+    _queueHistory.add(queue.length.toDouble());
     notifyListeners();
   }
 
-  // نفحص لو كل العملاء اتعاملوا
   void _checkSimulationComplete() {
     bool allArrived = _nextCustomerIndex >= customers.length;
     bool allServed = servers.every((s) => !s.isBusy) && queue.isEmpty;
@@ -221,25 +203,25 @@ class QueueSystem extends ChangeNotifier {
     }
   }
 
-  // إنهاء المحاكاة وحساب النتائج
   void _endSimulation() {
     if (!isRunning) return;
 
-    // حساب النتائج
     List<double> waitingTimes = customers.map((c) => c.waitingTime).toList();
     double avgWaiting =
         waitingTimes.reduce((a, b) => a + b) / waitingTimes.length;
     double avgService =
         customers.map((c) => c.serviceTime).toList().reduce((a, b) => a + b) /
         customers.length;
-    double utilization =
-        servers
-            .map((s) => s.totalBusyTime / currentTime)
-            .reduce((a, b) => a + b) /
-        servers.length;
-    int maxQueue = queueHistory.isEmpty
+
+    double totalUtilization = 0;
+    for (var server in servers) {
+      totalUtilization += server.getUtilization(currentTime);
+    }
+    double utilization = totalUtilization / servers.length;
+
+    int maxQueue = _queueHistory.isEmpty
         ? 0
-        : queueHistory.reduce((a, b) => a > b ? a : b).toInt();
+        : _queueHistory.reduce((a, b) => a > b ? a : b).toInt();
 
     SimulationResult result = SimulationResult(
       systemType: servers.length == 1 ? "Single Server" : "Double Server",
@@ -248,7 +230,7 @@ class QueueSystem extends ChangeNotifier {
       servedCustomers: customers.length,
       serverUtilization: utilization,
       maxQueueLength: maxQueue,
-      queueLengthHistory: List.from(queueHistory), // 👈 تعديل هنا
+      queueLengthHistory: List.from(_queueHistory),
       waitingTimes: waitingTimes,
     );
 
@@ -262,7 +244,6 @@ class QueueSystem extends ChangeNotifier {
     notifyListeners();
   }
 
-  // التوزيع الأسي
   double _exponential(double mean) {
     double u = _random.nextDouble();
     while (u == 0) {
@@ -270,6 +251,9 @@ class QueueSystem extends ChangeNotifier {
     }
     return -mean * log(1 - u);
   }
+
+  // Helper method to check if both simulations are done
+  bool get hasBothResults => singleResult != null && doubleResult != null;
 
   @override
   void dispose() {

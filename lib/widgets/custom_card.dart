@@ -7,6 +7,7 @@ class CustomCard extends StatelessWidget {
   final Color color;
 
   const CustomCard({
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
@@ -16,20 +17,35 @@ class CustomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 5,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white),
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [color.withOpacity(0.1), Colors.white],
+          ),
         ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-        trailing: Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: color,
+            radius: 28,
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          trailing: Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ),
       ),
