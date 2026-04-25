@@ -18,7 +18,6 @@ class QueueSystem extends ChangeNotifier {
   SimulationResult? singleResult;
   SimulationResult? doubleResult;
 
-  // UI State
   List<int> currentQueueIds = [];
   String server1Status = "Idle";
   String server2Status = "Idle";
@@ -26,7 +25,6 @@ class QueueSystem extends ChangeNotifier {
   int? currentCustomerId2;
   List<EventLog> eventLogs = [];
 
-  // Simulation State
   int _nextCustomerIndex = 0;
   List<double> _queueHistory = [];
   double _meanInterarrival = 0;
@@ -73,7 +71,6 @@ class QueueSystem extends ChangeNotifier {
     _nextCustomerIndex = 0;
     currentTime = 0;
 
-    // Generate customers
     customers = [];
     double time = 0;
     for (int i = 0; i < numCustomers; i++) {
@@ -113,7 +110,7 @@ class QueueSystem extends ChangeNotifier {
 
     Customer customer = customers[index];
     currentTime = customer.arrivalTime;
-    _addLog('Customer ${customer.id} arrived 🚶', 'arrive');
+    _addLog('Customer ${customer.id} arrived 🚶‍♂️', 'arrive');
 
     queue.add(customer);
     _updateQueueDisplay();
@@ -139,7 +136,6 @@ class QueueSystem extends ChangeNotifier {
           'start',
         );
 
-        // Update UI
         if (server.id == 1) {
           server1Status = "Busy";
           currentCustomerId1 = customer.id;
@@ -167,10 +163,8 @@ class QueueSystem extends ChangeNotifier {
     if (!isRunning) return;
 
     var server = servers.firstWhere((s) => s.id == serverId);
-    _addLog(
-      'Customer $customerId finished service on Server $serverId 🔴',
-      'finish',
-    );
+    _addLog('Customer $customerId finished service on Server $serverId 🔴',
+        'finish');
 
     server.isBusy = false;
     server.currentCustomer = null;
@@ -211,7 +205,7 @@ class QueueSystem extends ChangeNotifier {
         waitingTimes.reduce((a, b) => a + b) / waitingTimes.length;
     double avgService =
         customers.map((c) => c.serviceTime).toList().reduce((a, b) => a + b) /
-        customers.length;
+            customers.length;
 
     double totalUtilization = 0;
     for (var server in servers) {
@@ -252,7 +246,70 @@ class QueueSystem extends ChangeNotifier {
     return -mean * log(1 - u);
   }
 
-  // Helper method to check if both simulations are done
+  SimulationResult calculateResultsFast({
+    required int numCustomers,
+    required double meanInterarrival,
+    required double meanService,
+    required int numServers,
+  }) {
+    List<Customer> simCustomers = [];
+    double t = 0;
+    for (int i = 0; i < numCustomers; i++) {
+      t += _exponential(meanInterarrival);
+      simCustomers.add(Customer(id: i + 1, arrivalTime: t));
+    }
+
+    List<double> freeAt = List.filled(numServers, 0.0);
+    List<double> qHistory = [];
+    int maxQ = 0;
+    double totalBusyTime = 0;
+
+    for (var c in simCustomers) {
+      freeAt.sort();
+      double earliestFree = freeAt[0];
+
+      if (earliestFree > c.arrivalTime) {
+        c.serviceStartTime = earliestFree;
+        maxQ = max(
+            maxQ,
+            simCustomers
+                .where((x) =>
+                    x.arrivalTime <= earliestFree &&
+                    (x.serviceStartTime == null ||
+                        x.serviceStartTime! >= earliestFree))
+                .length);
+      } else {
+        c.serviceStartTime = c.arrivalTime;
+      }
+
+      double serviceTime = _exponential(meanService);
+      c.serviceEndTime = c.serviceStartTime! + serviceTime;
+      freeAt[0] = c.serviceEndTime!;
+      totalBusyTime += serviceTime;
+
+      qHistory
+          .add((c.serviceStartTime! > c.arrivalTime) ? maxQ.toDouble() : 0.0);
+    }
+
+    double finalTime = freeAt.reduce(max);
+    double avgWait =
+        simCustomers.fold(0.0, (sum, c) => sum + c.waitingTime) / numCustomers;
+    double avgServ =
+        simCustomers.fold(0.0, (sum, c) => sum + c.serviceTime) / numCustomers;
+    double util = (totalBusyTime / numServers) / finalTime;
+
+    return SimulationResult(
+      systemType: numServers == 1 ? "Single Server" : "Double Server",
+      avgWaitingTime: avgWait,
+      avgServiceTime: avgServ,
+      servedCustomers: numCustomers,
+      serverUtilization: util,
+      maxQueueLength: maxQ,
+      queueLengthHistory: qHistory,
+      waitingTimes: simCustomers.map((c) => c.waitingTime).toList(),
+    );
+  }
+
   bool get hasBothResults => singleResult != null && doubleResult != null;
 
   @override
