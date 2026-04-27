@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:takeaway_app/screens/chart_screen.dart';
 import '../logic/queue_system.dart';
+import '../services/export_service.dart'; // 👈 أضف هذا الاستيراد
 
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({super.key});
@@ -9,6 +11,9 @@ class ResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     var queueSystem = Provider.of<QueueSystem>(context);
     var result = queueSystem.singleResult ?? queueSystem.doubleResult;
+
+    // معرفة عدد السيرفرات من النتيجة
+    int numServers = result?.systemType == "Single Server" ? 1 : 2;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -37,6 +42,85 @@ class ResultsScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        // 👇 إضافة زر Export في الـ AppBar
+        actions: [
+          if (result != null)
+            GestureDetector(
+              onTap: () async {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFFF8C00)),
+                            ),
+                            SizedBox(height: 16),
+                            Text('Generating Excel Report...'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+
+                int numServers = result!.systemType == "Single Server" ? 1 : 2;
+
+                bool success = await ExportService.exportAndOpen(
+                  result: result!,
+                  eventLogs: queueSystem.eventLogs,
+                  customers: queueSystem.customers,
+                  currentTime: queueSystem.currentTime,
+                  numServers: numServers,
+                );
+
+                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? '✅ Excel file generated and opened successfully!'
+                            : '❌ Failed to generate Excel file',
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF44DD88), Color(0xFF22AA66)],
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.white, size: 18),
+                    SizedBox(width: 6),
+                    Text(
+                      'Export',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
       body: result == null
           ? Center(
@@ -308,41 +392,86 @@ class ResultsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFF6B00).withOpacity(0.35),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.replay_rounded,
-                              color: Colors.white, size: 20),
-                          SizedBox(width: 10),
-                          Text(
-                            'Run Another Simulation',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFFFF6B00).withOpacity(0.35),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.replay_rounded,
+                                    color: Colors.white, size: 20),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Run Again',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ChartScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFFF8C00).withOpacity(0.5),
+                              ),
+                              color: Colors.transparent,
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.bar_chart,
+                                    color: Color(0xFFFF8C00), size: 20),
+                                SizedBox(width: 10),
+                                Text(
+                                  'View Charts',
+                                  style: TextStyle(
+                                    color: Color(0xFFFF8C00),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                 ],

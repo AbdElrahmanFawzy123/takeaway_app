@@ -12,6 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.1.1
+  excel: ^4.0.6                        # 👈 إضافة الحزمة دي
+  path_provider: ^2.1.5               # 👈 إضافة الحزمة دي
+  share_plus: ^10.1.4            # 👈 إضافة الحزمة دي (لمشاركة الملف)
+  open_file: ^3.5.11   
+  permission_handler: ^11.3.1                   # 👈 إضافة الحزمة دي (لفتح الملف)
 
 dev_dependencies:
   flutter_lints: ^3.0.0
