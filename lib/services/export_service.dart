@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:excel/excel.dart';
+import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/simulation_result.dart';
 import '../models/event_log.dart';
 import '../models/customer.dart';
@@ -16,20 +18,14 @@ class ExportService {
     required int numServers,
   }) async {
     try {
-      print('📊 Starting Excel export...');
-      print('📊 Customers: ${customers.length}, Events: ${eventLogs.length}');
-
-      // إنشاء ملف Excel جديد
       var excel = Excel.createExcel();
 
-      // ==================== SHEET 1: SUMMARY ====================
       var summarySheet = excel['Summary'];
       summarySheet.appendRow([TextCellValue('Takeaway Simulation Report')]);
       summarySheet.appendRow(
           [TextCellValue('Generated: ${DateTime.now().toString()}')]);
       summarySheet.appendRow([]);
 
-      // System Configuration
       summarySheet.appendRow([TextCellValue('SYSTEM CONFIGURATION')]);
       summarySheet.appendRow(
           [TextCellValue('System Type'), TextCellValue(result.systemType)]);
@@ -45,7 +41,6 @@ class ExportService {
       ]);
       summarySheet.appendRow([]);
 
-      // Performance Metrics
       summarySheet.appendRow([TextCellValue('PERFORMANCE METRICS')]);
       summarySheet.appendRow([
         TextCellValue('Average Waiting Time'),
@@ -65,7 +60,6 @@ class ExportService {
       ]);
       summarySheet.appendRow([]);
 
-      // ==================== SHEET 2: CUSTOMER DETAILS ====================
       var customerSheet = excel['Customer Details'];
       customerSheet.appendRow([
         TextCellValue('Customer ID'),
@@ -84,7 +78,6 @@ class ExportService {
         ]);
       }
 
-      // ==================== SHEET 3: QUEUE HISTORY ====================
       var queueSheet = excel['Queue History'];
       queueSheet.appendRow(
           [TextCellValue('Time Step'), TextCellValue('Queue Length')]);
@@ -96,7 +89,6 @@ class ExportService {
         ]);
       }
 
-      // ==================== SHEET 4: EVENT LOG ====================
       var eventSheet = excel['Event Log'];
       eventSheet.appendRow([
         TextCellValue('Time (sec)'),
@@ -126,7 +118,6 @@ class ExportService {
         ]);
       }
 
-      // ==================== SHEET 5: STATISTICS ====================
       var statsSheet = excel['Statistics'];
       statsSheet.appendRow([TextCellValue('STATISTICAL SUMMARY')]);
       statsSheet.appendRow([]);
@@ -169,30 +160,28 @@ class ExportService {
         ]);
       }
 
-      // ==================== SAVE FILE ====================
       final directory = await getTemporaryDirectory();
       final fileName =
           'simulation_report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
       final filePath = '${directory.path}/$fileName';
-      print('📁 Saving to: $filePath');
+      debugPrint('📁 Saving to: $filePath');
 
       final fileBytes = excel.save();
       if (fileBytes != null) {
         final file = File(filePath);
         await file.writeAsBytes(fileBytes, flush: true);
-        print('✅ File saved successfully!');
+        debugPrint('✅ File saved successfully!');
 
-        // محاولة النسخ إلى مجلد التنزيلات
         try {
           final downloadsDir = await getDownloadsDirectory();
           if (downloadsDir != null) {
             final finalPath = '${downloadsDir.path}/$fileName';
             await file.copy(finalPath);
-            print('✅ Also saved to downloads: $finalPath');
+            debugPrint('✅ Also saved to downloads: $finalPath');
             return finalPath;
           }
         } catch (e) {
-          print('⚠️ Could not save to downloads: $e');
+          debugPrint('⚠️ Could not save to downloads: $e');
         }
 
         return filePath;
@@ -200,16 +189,41 @@ class ExportService {
 
       return null;
     } catch (e) {
-      print('❌ Excel Export Error: $e');
+      debugPrint('❌ Excel Export Error: $e');
       return null;
     }
   }
 
   static Future<void> openExcelFile(String filePath) async {
-    final result = await OpenFile.open(filePath);
-    print('📂 Open result: ${result.type} - ${result.message}');
-    if (result.type != ResultType.done) {
-      print('⚠️ Could not open file: ${result.message}');
+    debugPrint('📂 Trying to open Excel file: $filePath');
+
+    try {
+      final result = await OpenFile.open(filePath);
+
+      debugPrint('📂 Open result: ${result.type} - ${result.message}');
+
+      if (result.type != ResultType.done) {
+        debugPrint('⚠️ OpenFile failed: ${result.message}');
+
+        await _shareExcelFile(filePath);
+      }
+    } catch (e) {
+      debugPrint('❌ Exception while opening file: $e');
+
+      await _shareExcelFile(filePath);
+    }
+  }
+
+  static Future<void> _shareExcelFile(String filePath) async {
+    debugPrint('📤 Opening share sheet instead...');
+
+    try {
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: 'Simulation Excel Report',
+      );
+    } catch (e) {
+      debugPrint('❌ Share failed: $e');
     }
   }
 
